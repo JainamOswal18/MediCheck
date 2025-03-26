@@ -20,7 +20,7 @@ A Chrome extension that uses Gemini AI to generate summaries of web pages.
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/JainamOswal18/MediCheck.git
 cd chrome-extension
 ```
 
