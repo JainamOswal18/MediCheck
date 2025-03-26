@@ -4,30 +4,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
   summarizeBtn.addEventListener('click', async () => {
     try {
-      statusDiv.textContent = 'Generating summary...';
-      
+      statusDiv.textContent = "Generating summary...";
+
       // Get the active tab
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+
+      // Check if the URL is a chrome:// URL
+      if (tab.url.startsWith("chrome://")) {
+        throw new Error(
+          "This extension cannot be used on Chrome internal pages (chrome:// URLs). Please try it on a regular webpage."
+        );
+      }
+
       // Ensure content script is injected
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        files: ['content.js']
+        files: ["content.js"],
       });
-      
+
       // Send message to content script to scrape the page
-      const response = await chrome.tabs.sendMessage(tab.id, { action: 'scrape' });
-      
+      const response = await chrome.tabs.sendMessage(tab.id, {
+        action: "scrape",
+      });
+
       if (response && response.content) {
-        console.log('Content scraped successfully:', response.content);
-        
+        console.log("Content scraped successfully:", response.content);
+
         // Send the content to the backend
-        const summaryResponse = await fetch('http://localhost:8000/summarize', {
-          method: 'POST',
+        const summaryResponse = await fetch("http://localhost:8000/summarize", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ content: response.content })
+          body: JSON.stringify({ content: response.content }),
         });
 
         if (!summaryResponse.ok) {
@@ -35,17 +47,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const summaryData = await summaryResponse.json();
-        console.log('Summary received:', summaryData);
-        
+        console.log("Summary received:", summaryData);
+
         // Store the summary in chrome.storage
         await chrome.storage.local.set({ summary: summaryData.summary });
-        
+
         // Open the sidebar
-        await chrome.sidePanel.open({ windowId: tab.windowId });
-        
-        statusDiv.textContent = 'Summary generated! Check the sidebar.';
+        try {
+          await chrome.sidePanel.open({ windowId: tab.windowId });
+          statusDiv.textContent = "Summary generated! Check the sidebar.";
+        } catch (error) {
+          console.error("Error opening sidebar:", error);
+          statusDiv.textContent =
+            "Summary generated! Click the extension icon again to view it.";
+        }
       } else {
-        throw new Error('No content received from content script');
+        throw new Error("No content received from content script");
       }
     } catch (error) {
       console.error('Detailed error:', error);

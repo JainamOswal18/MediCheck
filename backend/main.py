@@ -4,6 +4,8 @@ from pydantic import BaseModel
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
+import json
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -20,10 +22,11 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["chrome-extension://*"],
+    allow_origins=["*"],  # Allow all origins for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 class ContentRequest(BaseModel):
@@ -35,12 +38,50 @@ async def summarize_content(request: ContentRequest):
         content = request.content
         metadata = content.get('metadata', {})
         
+        # Create timestamp for logging
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Log to console
+        print("\n" + "="*50)
+        print(f"New request received at {timestamp}")
+        print(f"URL: {content.get('url', 'No URL')}")
+        print(f"Title: {content.get('title', 'No title')}")
+        print(f"Content length: {len(content.get('text', ''))} characters")
+        print(f"HTML length: {len(content.get('html', ''))} characters")
+        print("Metadata:", json.dumps(metadata, indent=2))
+        print("="*50 + "\n")
+        
+        # Create logs directory if it doesn't exist
+        os.makedirs('logs', exist_ok=True)
+        
+        # Save complete HTML to a separate file
+        html_filename = f"logs/html_content_{timestamp.replace(' ', '_').replace(':', '-')}.html"
+        with open(html_filename, 'w', encoding='utf-8') as f:
+            f.write(content.get('html', ''))
+        
+        # Save metadata and preview to JSON file
+        log_data = {
+            "timestamp": timestamp,
+            "url": content.get('url'),
+            "title": content.get('title'),
+            "content_length": len(content.get('text', '')),
+            "html_length": len(content.get('html', '')),
+            "metadata": metadata,
+            "text_preview": content.get('text', '')[:500] + '...' if len(content.get('text', '')) > 500 else content.get('text', ''),
+            "html_file": html_filename
+        }
+        
+        # Save to JSON file
+        log_filename = f"logs/scraped_data_{timestamp.replace(' ', '_').replace(':', '-')}.json"
+        with open(log_filename, 'w', encoding='utf-8') as f:
+            json.dump(log_data, f, ensure_ascii=False, indent=2)
+        
         # Initialize Gemini model
-        model = genai.GenerativeModel('gemini-1.0-pro')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         
         # Prepare the prompt with enhanced context
         prompt = f"""
-        Please provide a comprehensive summary of the following webpage content:
+        Please provide a short summary of the following webpage content:
         
         Title: {content['title']}
         URL: {content['url']}
@@ -64,11 +105,20 @@ async def summarize_content(request: ContentRequest):
         
         # Generate summary
         response = model.generate_content(prompt)
+        
+        # Log the summary
+        print("\nGenerated Summary:")
+        print("-"*50)
+        print(response.text)
+        print("-"*50 + "\n")
+        
         return {"summary": response.text}
     
     except Exception as e:
+        print(f"\nError occurred: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
+    print("\nStarting FastAPI server...")
     uvicorn.run(app, host="0.0.0.0", port=8000) 
