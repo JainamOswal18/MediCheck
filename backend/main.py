@@ -4,11 +4,6 @@ from pydantic import BaseModel
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -16,10 +11,8 @@ load_dotenv()
 # Configure Gemini API
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 if not GOOGLE_API_KEY:
-    logger.error("GOOGLE_API_KEY not found in environment variables")
     raise ValueError("GOOGLE_API_KEY not found in environment variables")
 
-logger.info("Configuring Gemini API...")
 genai.configure(api_key=GOOGLE_API_KEY)
 
 app = FastAPI()
@@ -39,37 +32,43 @@ class ContentRequest(BaseModel):
 @app.post("/summarize")
 async def summarize_content(request: ContentRequest):
     try:
-        logger.info("Received content for summarization")
-        logger.info(f"Content title: {request.content.get('title', 'No title')}")
-        logger.info(f"Content length: {len(request.content.get('text', ''))} characters")
+        content = request.content
+        metadata = content.get('metadata', {})
         
         # Initialize Gemini model
-        logger.info("Initializing Gemini model...")
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-1.0-pro')
         
-        # Prepare the prompt
+        # Prepare the prompt with enhanced context
         prompt = f"""
-        Please provide a concise summary of the following webpage content:
+        Please provide a comprehensive summary of the following webpage content:
         
-        Title: {request.content['title']}
-        URL: {request.content['url']}
-        Content: {request.content['text'][:30000]}  # Limit content length
+        Title: {content['title']}
+        URL: {content['url']}
         
-        Please provide a well-structured summary that captures the main points.
+        Metadata:
+        - Description: {metadata.get('description', 'Not available')}
+        - Keywords: {metadata.get('keywords', 'Not available')}
+        - Author: {metadata.get('author', 'Not available')}
+        - Open Graph Title: {metadata.get('ogTitle', 'Not available')}
+        - Open Graph Description: {metadata.get('ogDescription', 'Not available')}
+        
+        Main Content:
+        {content['text'][:30000]}  # Limit content length
+        
+        Please provide a well-structured summary that captures:
+        1. The main topic and purpose of the page
+        2. Key points and important information
+        3. Any notable metadata or context
+        4. The overall structure and organization of the content
         """
         
         # Generate summary
-        logger.info("Generating summary...")
         response = model.generate_content(prompt)
-        
-        logger.info("Summary generated successfully")
         return {"summary": response.text}
     
     except Exception as e:
-        logger.error(f"Error in summarize_content: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("Starting FastAPI server...")
     uvicorn.run(app, host="0.0.0.0", port=8000) 
