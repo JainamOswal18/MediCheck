@@ -234,6 +234,26 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("No summary in validation data");
     }
 
+    // Extract all incorrect phrases and their corrections for highlighting
+    const incorrectPhrases = [];
+    const correctTexts = [];
+    if (data.validation_results && data.validation_results.length > 0) {
+      data.validation_results.forEach((result) => {
+        if (result.incorrect_text && result.incorrect_text.trim()) {
+          incorrectPhrases.push(result.incorrect_text.trim());
+          correctTexts.push(result.correct_text || "No correction available");
+        }
+      });
+    }
+
+    // Send highlight command to content script immediately without waiting for button press
+    if (incorrectPhrases.length > 0) {
+      console.log(
+        `Sending highlight command for ${incorrectPhrases.length} phrases`
+      );
+      sendHighlightCommand(incorrectPhrases, correctTexts);
+    }
+
     // Display validation results
     if (data.validation_results && data.validation_results.length > 0) {
       console.log(`Found ${data.validation_results.length} validation results`);
@@ -245,7 +265,9 @@ document.addEventListener("DOMContentLoaded", function () {
             <h4 style="margin-bottom: 10px; color: var(--accent-blue);">Issue #${
               index + 1
             }</h4>
-            <div class="incorrect-text">${result.incorrect_text}</div>
+            <div class="incorrect-text" data-index="${index}">${
+          result.incorrect_text
+        }</div>
             <div class="correct-text">${result.correct_text}</div>
           </div>
         `;
@@ -258,6 +280,48 @@ document.addEventListener("DOMContentLoaded", function () {
       validationResults.innerHTML =
         '<p style="padding: 15px; background-color: var(--bg-secondary); border-left: 3px solid var(--accent-green); color: var(--accent-green); font-weight: bold;">No issues found. All information appears to be accurate.</p>';
     }
+  }
+
+  // Function to send highlight command to content script
+  function sendHighlightCommand(phrases, corrections) {
+    // Get the current active tab
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      if (tabs && tabs[0]) {
+        console.log("Sending highlight command to tab:", tabs[0].id);
+        try {
+          chrome.tabs
+            .sendMessage(tabs[0].id, {
+              action: "highlight",
+              phrases: phrases,
+              corrections: corrections,
+            })
+            .then((response) => {
+              console.log("Highlight command response:", response);
+            })
+            .catch((error) => {
+              console.error("Error sending highlight command:", error);
+
+              // If there's an error (content script not ready), retry after a short delay
+              setTimeout(() => {
+                console.log("Retrying highlight command...");
+                chrome.tabs
+                  .sendMessage(tabs[0].id, {
+                    action: "highlight",
+                    phrases: phrases,
+                    corrections: corrections,
+                  })
+                  .catch((retryError) => {
+                    console.error("Error on retry:", retryError);
+                  });
+              }, 1000);
+            });
+        } catch (error) {
+          console.error("Exception sending highlight command:", error);
+        }
+      } else {
+        console.error("No active tab found for highlighting");
+      }
+    });
   }
 
   // Event listener for theme toggle button

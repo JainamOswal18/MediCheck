@@ -129,6 +129,44 @@ document.addEventListener('DOMContentLoaded', function() {
         lastUpdate: Date.now(), // Add timestamp for freshness check
       });
 
+      // Send highlight command directly to content script before opening side panel
+      try {
+        // Extract incorrect statements for highlighting
+        const incorrectPhrases = [];
+        const correctTexts = [];
+
+        if (
+          validationData.validation_results &&
+          validationData.validation_results.length > 0
+        ) {
+          validationData.validation_results.forEach((result) => {
+            if (result.incorrect_text && result.incorrect_text.trim()) {
+              incorrectPhrases.push(result.incorrect_text.trim());
+              correctTexts.push(
+                result.correct_text || "No correction available"
+              );
+            }
+          });
+        }
+
+        if (incorrectPhrases.length > 0) {
+          console.log(
+            `Popup sending highlight command for ${incorrectPhrases.length} phrases`
+          );
+          chrome.tabs
+            .sendMessage(tab.id, {
+              action: "highlight",
+              phrases: incorrectPhrases,
+              corrections: correctTexts,
+            })
+            .catch((error) => {
+              console.error("Error applying highlighting from popup:", error);
+            });
+        }
+      } catch (error) {
+        console.error("Exception sending highlight command from popup:", error);
+      }
+
       // Open the side panel
       await openSidePanel(tab);
     } catch (error) {
