@@ -1,33 +1,123 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Summary</title>
-  <style>
-    body {
-      padding: 15px;
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-    }
-    .summary-container {
-      max-width: 100%;
-    }
-    .loading {
-      text-align: center;
-      color: #666;
-    }
-    .error {
-      color: #ff0000;
-      padding: 10px;
-      border: 1px solid #ff0000;
-      border-radius: 4px;
-    }
-  </style>
-</head>
-<body>
-  <div class="summary-container">
-    <h2>Page Summary</h2>
-    <div id="summary-content"></div>
-  </div>
-  <script src="sidebar.js"></script>
-</body>
-</html> 
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page Insights Dashboard</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <div class="header-section">
+        <button class="mode-toggle">Light Mode</button>
+        <div class="header-greeting">Hi,</div>
+        <div class="header-subtext">How can I assist you today?</div>
+      </div>
+
+      <div class="content-container">
+        <div class="summary-section">
+          <div class="section-header">
+            <span class="section-title">Page Insights</span>
+          </div>
+          <div id="summary-content">
+            <p>Content analysis will appear here.</p>
+          </div>
+        </div>
+
+        <div class="chat-section">
+          <div class="section-header">
+            <span class="section-title">Digital Assistant</span>
+          </div>
+          <div id="chat-messages" class="flex flex-col">
+            <div class="message ai-message">
+              Greetings, digital wanderer. Ready to explore the validity of the
+              content?
+            </div>
+          </div>
+          <div class="chat-input-container">
+            <input
+              type="text"
+              id="chat-input"
+              placeholder="Transmit your query..."
+            />
+            <button id="send-button" class="send-button">↵</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const chatMessages = document.getElementById("chat-messages");
+        const chatInput = document.getElementById("chat-input");
+        const sendButton = document.getElementById("send-button");
+        const modeToggle = document.querySelector(".mode-toggle");
+        const body = document.body;
+
+        // Function to toggle theme
+        function toggleTheme() {
+          // Toggle light mode class
+          body.classList.toggle("light-mode");
+
+          // Update button text based on current mode
+          if (body.classList.contains("light-mode")) {
+            modeToggle.textContent = "Dark Mode";
+            // Optional: Save user preference
+            localStorage.setItem("theme", "light");
+          } else {
+            modeToggle.textContent = "Light Mode";
+            // Optional: Save user preference
+            localStorage.setItem("theme", "dark");
+          }
+        }
+
+        // Check for saved theme preference on page load
+        function initializeTheme() {
+          const savedTheme = localStorage.getItem("theme");
+
+          if (savedTheme === "light") {
+            body.classList.add("light-mode");
+            modeToggle.textContent = "Dark Mode";
+          } else {
+            body.classList.remove("light-mode");
+            modeToggle.textContent = "Light Mode";
+          }
+        }
+
+        // Function to send message
+        function sendMessage() {
+          const message = chatInput.value.trim();
+          if (message) {
+            const userMessage = document.createElement("div");
+            userMessage.classList.add("message", "user-message");
+            userMessage.textContent = message;
+            chatMessages.appendChild(userMessage);
+
+            const aiMessage = document.createElement("div");
+            aiMessage.classList.add("message", "ai-message");
+            aiMessage.textContent = `Analyzing: "${message}". Processing initiated...`;
+            chatMessages.appendChild(aiMessage);
+
+            chatInput.value = "";
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+        }
+
+        // Event Listeners
+        modeToggle.addEventListener("click", toggleTheme);
+        sendButton.addEventListener("click", sendMessage);
+        chatInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            sendMessage();
+          }
+        });
+
+        // Initialize theme on page load
+        initializeTheme();
+      });
+    </script>
+    <script src="sidebar.js"></script>
+  </body>
+</html>
