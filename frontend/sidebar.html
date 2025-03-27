@@ -7,6 +7,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
       :root {
         --bg-primary: #0f0e17;
@@ -135,10 +136,22 @@
         background: transparent;
         border: 2px solid var(--accent-purple);
         color: var(--accent-purple);
-        padding: 5px 10px;
-        border-radius: 20px;
+        padding: 0;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
         cursor: pointer;
         z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: all 0.3s ease;
+      }
+      
+      .mode-toggle:hover {
+        transform: rotate(30deg);
+        box-shadow: 0 0 10px var(--accent-purple);
       }
       
       .reset-button {
@@ -484,7 +497,7 @@
   <body>
     <div class="dashboard-container">
       <div class="header-section">
-        <button class="mode-toggle">Light Mode</button>
+        <button class="mode-toggle"><i class="fas fa-sun"></i></button>
         <div class="header-greeting">Content Validator</div>
         <div class="header-subtext">Analysis and validation of web content</div>
       </div>

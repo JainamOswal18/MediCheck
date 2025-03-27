@@ -186,10 +186,16 @@ document.addEventListener("DOMContentLoaded", function () {
         // Set theme
         if (result.theme === "light") {
           body.classList.add("light-mode");
-          modeToggle.textContent = "Dark Mode";
+          const iconElement = modeToggle.querySelector("i");
+          if (iconElement) {
+            iconElement.className = "fas fa-sun";
+          }
         } else {
           body.classList.remove("light-mode");
-          modeToggle.textContent = "Light Mode";
+          const iconElement = modeToggle.querySelector("i");
+          if (iconElement) {
+            iconElement.className = "fas fa-moon";
+          }
         }
 
         // Set active tab
@@ -343,12 +349,13 @@ document.addEventListener("DOMContentLoaded", function () {
       // Toggle the theme
       body.classList.toggle("light-mode");
 
-      // Update button text and store preference
+      // Update button icon and store preference
+      const iconElement = modeToggle.querySelector("i");
       if (body.classList.contains("light-mode")) {
-        modeToggle.textContent = "Dark Mode";
+        iconElement.className = "fas fa-sun";
         chrome.storage.local.set({ theme: "light" });
       } else {
-        modeToggle.textContent = "Light Mode";
+        iconElement.className = "fas fa-moon";
         chrome.storage.local.set({ theme: "dark" });
       }
 
