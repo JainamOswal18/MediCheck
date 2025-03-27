@@ -1,18 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Web Page Summarizer",
+  "name": "Web Page Text Summarizer",
   "version": "1.0",
-  "description": "Scrapes webpage content and generates summaries using Gemini AI",
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "storage",
-    "sidePanel"
-  ],
-  "host_permissions": [
-    "http://localhost:8000/*",
-    "<all_urls>"
-  ],
+  "description": "Scrapes webpage text content only and generates summaries using Gemini AI",
+  "permissions": ["activeTab", "scripting", "storage", "sidePanel"],
+  "host_permissions": ["http://localhost:8000/*", "<all_urls>"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

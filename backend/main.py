@@ -38,43 +38,35 @@ async def summarize_content(request: ContentRequest):
         content = request.content
         metadata = content.get('metadata', {})
         
-        # Create timestamp for logging
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # # Create timestamp for logging
+        # timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Log to console
-        print("\n" + "="*50)
-        print(f"New request received at {timestamp}")
-        print(f"URL: {content.get('url', 'No URL')}")
-        print(f"Title: {content.get('title', 'No title')}")
-        print(f"Content length: {len(content.get('text', ''))} characters")
-        print(f"HTML length: {len(content.get('html', ''))} characters")
-        print("Metadata:", json.dumps(metadata, indent=2))
-        print("="*50 + "\n")
+        # # Log to console
+        # print("\n" + "="*50)
+        # print(f"New request received at {timestamp}")
+        # print(f"URL: {content.get('url', 'No URL')}")
+        # print(f"Title: {content.get('title', 'No title')}")
+        # print(f"Content length: {len(content.get('text', ''))} characters")
+        # print("Metadata:", json.dumps(metadata, indent=2))
+        # print("="*50 + "\n")
         
-        # Create logs directory if it doesn't exist
-        os.makedirs('logs', exist_ok=True)
+        # # Create logs directory if it doesn't exist
+        # os.makedirs('logs', exist_ok=True)
         
-        # Save complete HTML to a separate file
-        html_filename = f"logs/html_content_{timestamp.replace(' ', '_').replace(':', '-')}.html"
-        with open(html_filename, 'w', encoding='utf-8') as f:
-            f.write(content.get('html', ''))
+        # # Save metadata and text content to JSON file
+        # log_data = {
+        #     "timestamp": timestamp,
+        #     "url": content.get('url'),
+        #     "title": content.get('title'),
+        #     "content_length": len(content.get('text', '')),
+        #     "metadata": metadata,
+        #     "text_preview": content.get('text', '')[:500] + '...' if len(content.get('text', '')) > 500 else content.get('text', '')
+        # }
         
-        # Save metadata and preview to JSON file
-        log_data = {
-            "timestamp": timestamp,
-            "url": content.get('url'),
-            "title": content.get('title'),
-            "content_length": len(content.get('text', '')),
-            "html_length": len(content.get('html', '')),
-            "metadata": metadata,
-            "text_preview": content.get('text', '')[:500] + '...' if len(content.get('text', '')) > 500 else content.get('text', ''),
-            "html_file": html_filename
-        }
-        
-        # Save to JSON file
-        log_filename = f"logs/scraped_data_{timestamp.replace(' ', '_').replace(':', '-')}.json"
-        with open(log_filename, 'w', encoding='utf-8') as f:
-            json.dump(log_data, f, ensure_ascii=False, indent=2)
+        # # Save to JSON file
+        # log_filename = f"logs/scraped_data_{timestamp.replace(' ', '_').replace(':', '-')}.json"
+        # with open(log_filename, 'w', encoding='utf-8') as f:
+        #     json.dump(log_data, f, ensure_ascii=False, indent=2)
         
         # Initialize Gemini model
         model = genai.GenerativeModel('gemini-2.0-flash')

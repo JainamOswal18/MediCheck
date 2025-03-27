@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   summarizeBtn.addEventListener('click', async () => {
     try {
-      statusDiv.textContent = "Generating summary...";
+      statusDiv.textContent = "Scraping text content...";
 
       // Get the active tab
       const [tab] = await chrome.tabs.query({
@@ -31,7 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
       });
 
       if (response && response.content) {
-        console.log("Content scraped successfully:", response.content);
+        console.log("Text content scraped successfully:", response.content);
+        statusDiv.textContent = "Generating summary from text content...";
 
         // Send the content to the backend
         const summaryResponse = await fetch("http://localhost:8000/summarize", {

@@ -1,10 +1,9 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'scrape') {
-    // Get the main content of the page
+    // Get only the text content of the page
     const content = {
       title: document.title,
       text: document.body.innerText,
-      html: document.documentElement.outerHTML, // Get complete HTML
       url: window.location.href,
       metadata: {
         description:
@@ -21,7 +20,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           document.querySelector('meta[property="og:image"]')?.content || "",
       },
     };
-    
+
     // Send the content back to the popup
     sendResponse({ content });
   }
