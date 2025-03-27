@@ -17,7 +17,6 @@
         --accent-blue: #2de2e6;
         --accent-purple: #5d3fdd;
         --accent-red: #ff4a4a;
-        --accent-green: #4aff91;
 
         /* Light mode colors */
         --bg-primary-light: #ffffff;
@@ -28,7 +27,6 @@
         --accent-blue-light: #1e90ff;
         --accent-purple-light: #8a2be2;
         --accent-red-light: #ff3333;
-        --accent-green-light: #33cc66;
         
         /* Layout variables */
         --header-height: 100px;
@@ -48,7 +46,6 @@
         --accent-blue: var(--accent-blue-light);
         --accent-purple: var(--accent-purple-light);
         --accent-red: var(--accent-red-light);
-        --accent-green: var(--accent-green-light);
       }
 
       @keyframes gradientBG {
@@ -66,10 +63,10 @@
       @keyframes neonPulse {
         0%,
         100% {
-          text-shadow: 0 0 5px var(--accent-pink), 0 0 10px var(--accent-blue);
+          text-shadow: 0 0 5px var(--accent-pink), 0 0 10px var(--accent-purple);
         }
         50% {
-          text-shadow: 0 0 15px var(--accent-pink), 0 0 20px var(--accent-blue);
+          text-shadow: 0 0 15px var(--accent-pink), 0 0 20px var(--accent-purple);
         }
       }
 
@@ -136,8 +133,8 @@
         top: 20px;
         right: 20px;
         background: transparent;
-        border: 2px solid var(--accent-blue);
-        color: var(--accent-blue);
+        border: 2px solid var(--accent-purple);
+        color: var(--accent-purple);
         padding: 5px 10px;
         border-radius: 20px;
         cursor: pointer;
@@ -238,7 +235,7 @@
         box-shadow: 0 10px 25px rgba(45, 226, 230, 0.2);
         display: flex;
         flex-direction: column;
-        border: 1px solid var(--accent-blue);
+        border: 1px solid var(--accent-purple);
         animation: slideIn 0.9s ease;
         height: 100%;
         min-height: 0; /* Allows for proper flexbox sizing */
@@ -257,7 +254,7 @@
       .section-title {
         font-size: 18px;
         font-weight: 600;
-        color: var(--accent-blue);
+        color: var(--accent-purple);
       }
 
       #summary-content,
@@ -357,7 +354,7 @@
         background-color: var(--bg-secondary);
         color: var(--text-secondary);
         align-self: flex-start;
-        border-left: 3px solid var(--accent-blue);
+        border-left: 3px solid var(--accent-purple);
       }
 
       #chat-messages {
@@ -380,7 +377,7 @@
       #summary-content::-webkit-scrollbar-thumb,
       #medical-content::-webkit-scrollbar-thumb,
       #chat-messages::-webkit-scrollbar-thumb {
-        background: var(--accent-blue);
+        background: var(--accent-purple);
         border-radius: 4px;
       }
 
