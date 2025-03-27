@@ -83,9 +83,23 @@ async def validate_content(request: ContentRequest):
 
         logger.info("Calling get_medical_validation function")
         validation_result = get_medical_validation(formatted_text)
+        
+        # Check if validation_result is a string and parse it to JSON if needed
+        if isinstance(validation_result, str):
+            try:
+                validation_result = json.loads(validation_result)
+                logger.info("Successfully parsed validation result from string to JSON")
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse validation result as JSON: {str(e)}")
+                # Create a fallback result if parsing fails
+                validation_result = {
+                    "summary": "Error parsing validation result",
+                    "validation_results": []
+                }
 
-        logger.info(f"Validation result keys: {validation_result.keys() if validation_result else 'None'}")
-        if "validation_results" in validation_result:
+        # Now validation_result should be a dictionary
+        logger.info(f"Validation result keys: {validation_result.keys() if isinstance(validation_result, dict) else 'Not a dictionary'}")
+        if isinstance(validation_result, dict) and "validation_results" in validation_result:
             logger.info(f"Number of validation results: {len(validation_result['validation_results'])}")
 
         logger.info("Validation completed successfully")
@@ -100,11 +114,14 @@ async def validate_content(request: ContentRequest):
 
     except Exception as e:
         logger.error(f"Error during content validation: {str(e)}")
+        # Create a structured error response
         error_response = {
             "summary": f"Error: {str(e)}",
             "validation_results": []
         }
-        raise HTTPException(status_code=500, detail=json.dumps(error_response))
+        # Return the error response directly instead of raising an exception
+        # This ensures the client gets a properly formatted response even in error cases
+        return error_response
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
