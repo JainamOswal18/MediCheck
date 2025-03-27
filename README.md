@@ -27,11 +27,13 @@ cd chrome-extension
 ### 2. Backend Setup
 
 1. Navigate to the backend directory:
+
    ```bash
    cd backend
    ```
 
 2. Create and activate a virtual environment:
+
    ```bash
    # On Windows
    python -m venv venv
@@ -43,15 +45,18 @@ cd chrome-extension
    ```
 
 3. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. Create a `.env` file in the backend directory:
+
    ```bash
    # backend/.env
    GOOGLE_API_KEY=your_api_key_here
    ```
+
    Replace `your_api_key_here` with your actual Google API key.
 
 5. Start the FastAPI server:
@@ -80,11 +85,13 @@ cd chrome-extension
 ### Common Issues
 
 1. **Backend Connection Error**
+
    - Ensure the FastAPI server is running
    - Check if the server is accessible at `http://localhost:8000`
    - Verify your Google API key is correctly set in the `.env` file
 
 2. **Extension Not Working**
+
    - Check Chrome DevTools console for errors (right-click extension popup → Inspect)
    - Ensure all permissions are granted in `chrome://extensions/`
    - Try reloading the extension
@@ -96,6 +103,7 @@ cd chrome-extension
 ### Debugging
 
 1. **Backend Logs**
+
    - Check the terminal running the FastAPI server for detailed logs
    - Look for any error messages or exceptions
 
@@ -121,4 +129,4 @@ cd chrome-extension
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
