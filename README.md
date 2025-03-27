@@ -1,13 +1,20 @@
-# Web Page Summarizer Chrome Extension
+# Medical Content Validator Chrome Extension
 
-A Chrome extension that uses Gemini AI to generate summaries of web pages.
+A Chrome extension that uses Gemini AI to validate medical information on web pages and provide factual corrections.
 
 ## Features
 
 - Scrapes webpage content when the extension icon is clicked
 - Sends content to a FastAPI backend for processing
-- Uses Gemini AI to generate concise summaries
-- Displays summaries in a Chrome sidebar
+- Uses Gemini AI to validate medical information and identify inaccuracies
+- Highlights incorrect statements directly on the webpage with tooltips showing corrections
+- Displays validation results in a Chrome side panel with three tabs:
+  - **Content**: Shows the original webpage content
+  - **Validation**: Displays summary and detailed validation results
+  - **Assistant**: Interactive chat interface for asking questions about the content
+- Light/dark theme toggle with sun/moon icons
+- Local storage for saving validation results and chat history
+- Options to clear chat history or reset all data for testing
 
 ## Prerequisites
 
@@ -67,13 +74,28 @@ cd chrome-extension
 3. Click "Load unpacked" and select the `frontend` directory from the project
 4. The extension icon should appear in your Chrome toolbar
 
-### 4. Testing the Extension
+### 4. Using the Extension
 
 1. Make sure the backend server is running (you should see "Starting FastAPI server..." in the terminal)
-2. Navigate to any webpage you want to summarize
+2. Navigate to any webpage with medical content you want to validate
 3. Click the extension icon in your Chrome toolbar
 4. Click "Generate Summary" in the popup
-5. The summary will appear in the sidebar
+5. The extension will:
+   - Extract content from the webpage
+   - Send it to the backend for validation
+   - Highlight incorrect statements on the page with tooltips
+   - Open a side panel with validation results
+6. In the side panel, you can:
+   - View the original content in the "Content" tab
+   - See validation results and corrections in the "Validation" tab
+   - Chat with the AI assistant about the content in the "Assistant" tab
+7. Toggle between light and dark themes using the sun/moon icon in the header
+
+## Backend API Endpoints
+
+- `/summarize` - Validates content and returns analysis results
+- `/chat` - Processes chat messages and returns AI responses
+- `/health` - Health check endpoint
 
 ## Troubleshooting
 
@@ -106,10 +128,12 @@ cd chrome-extension
 
 ## Development Notes
 
-- The extension uses Manifest V3
-- The backend uses FastAPI and Gemini AI
+- The extension uses Manifest V3 with Chrome Side Panel API
+- The backend uses FastAPI and LangChain with Gemini AI
 - The frontend is built with vanilla JavaScript
-- Content is limited to 30,000 characters for processing
+- Light/dark theme using CSS variables
+- Content highlighting with CSS and JavaScript
+- Interactive chat interface with typing indicators and animations
 
 ## Contributing
 
