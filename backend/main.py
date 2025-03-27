@@ -62,6 +62,14 @@ async def validate_content(request: ContentRequest):
         url = content.get("url", "No URL")
         text = content.get("text", "")
 
+        custom_instructions = """
+        Focus on fact-checking the medical claims in the query.
+        Present accurate information and clearly correct any misconceptions.
+        Use authoritative medical sources and provide links to reliable references.
+        Structure your response with clear sections addressing each claim separately.
+        """
+    
+
         logger.info(f"Content info - Title: {title}, URL: {url}, Text length: {len(text)}")
 
         formatted_text = f"""
@@ -82,7 +90,7 @@ async def validate_content(request: ContentRequest):
         logger.info(f"Processing Content for Validation - Source: {url}, Length: {len(formatted_text)}")
 
         logger.info("Calling get_medical_validation function")
-        validation_result = get_medical_validation(formatted_text)
+        validation_result = get_medical_validation(formatted_text, custom_instructions=custom_instructions)
         
         # Check if validation_result is a string and parse it to JSON if needed
         if isinstance(validation_result, str):
