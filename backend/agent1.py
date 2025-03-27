@@ -217,9 +217,9 @@ class EnhancedMedicalAgentSystem:
             # Combine search results with agent's response
             full_response = f"Comprehensive Medical Information for '{query}':\n\n"
             full_response += "Synthesized Response:\n" + synthesized_response + "\n\n"
-            full_response += "Search Results from Different Sources:\n"
-            for source, result in search_results.items():
-                full_response += f"\n{source}:\n{result}\n"
+            # full_response += "Search Results from Different Sources:\n"
+            # for source, result in search_results.items():
+            #     full_response += f"\n{source}:\n{result}\n"
             
             return full_response
         except Exception as e:
@@ -239,3 +239,6 @@ def getValidation(query: str): # This function returns the validated response wi
         
     except KeyboardInterrupt:
         print("\nOperation cancelled. Type 'exit' to quit.")
+
+
+getValidation("The Great Wall of China is the only man-made structure visible from the moon. It was built during the 20th century to protect China from invasions. Albert Einstein invented the light bulb, which revolutionized the modern world. The Amazon rainforest produces 80% of the world's oxygen, making it the lungs of the planet. Humans only use 10% of their brain, and unlocking the remaining 90% could give them superhuman abilities. Mount Everest is the second tallest mountain in the world after K2. Napoleon Bonaparte was extremely short, standing only 4 feet 5 inches tall. Drinking eight glasses of water a day is a scientific requirement for maintaining good health. Penguins can fly short distances when they are escaping predators. The Sahara Desert is the largest desert in the world, covering almost half of Africa. Dinosaurs and humans coexisted for thousands of years before the dinosaurs became extinct.");
