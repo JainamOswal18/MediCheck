@@ -1,39 +1,152 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Web Page Text Summarizer</title>
+  <title>Summarizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      width: 300px;
-      padding: 15px;
-      font-family: Arial, sans-serif;
+    :root {
+      --neon-pink: #FF6AD5;
+      --neon-blue: #00F5FF;
+      --deep-purple: #5E3C58;
+      --electric-purple: #7B1E7A;
+      --synthwave-background: linear-gradient(145deg, #0E0E2C, #1A1A40);
     }
-    button {
+
+    body {
+      width: 320px;
+      font-family: 'Orbitron', sans-serif;
+      background: var(--synthwave-background);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      color: white;
+      perspective: 1000px;
+      overflow: hidden;
+    }
+
+    .container {
+      background: rgba(30, 30, 80, 0.6);
+      border-radius: 15px;
+      padding: 25px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 
+        0 0 20px rgba(255, 106, 213, 0.3),
+        0 0 40px rgba(0, 245, 255, 0.2);
+      border: 2px solid transparent;
+      border-image: linear-gradient(45deg, var(--neon-pink), var(--neon-blue)) 1;
+      transition: all 0.3s ease;
+    }
+
+    .title {
+      font-size: 24px;
+      background: linear-gradient(45deg, var(--neon-pink), var(--neon-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+
+    .description {
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .synth-button {
       width: 100%;
-      padding: 10px;
-      background-color: #4CAF50;
+      padding: 12px;
+      background: linear-gradient(45deg, var(--electric-purple), var(--neon-pink));
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 14px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
     }
-    button:hover {
-      background-color: #45a049;
+
+    .synth-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        120deg, 
+        transparent, 
+        rgba(255,255,255,0.3), 
+        transparent
+      );
+      transition: all 0.6s;
     }
+
+    .synth-button:hover::before {
+      left: 100%;
+    }
+
+    .synth-button:hover {
+      transform: scale(1.05);
+      box-shadow: 
+        0 0 15px var(--neon-pink), 
+        0 0 25px var(--neon-blue);
+    }
+
     #status {
-      margin-top: 10px;
+      margin-top: 15px;
       text-align: center;
-      color: #666;
+      color: var(--neon-blue);
+      font-size: 12px;
+      min-height: 20px;
+      letter-spacing: 1px;
+    }
+
+    /* Animated Background Effect */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0.3;
+    }
+
+    .bg-animation div {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 106, 213, 0.1);
+      animation: float 10s infinite alternate;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-50px) rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <h2>Web Page Text Summarizer</h2>
-  <p>Extracts and summarizes page text content only.</p>
-  <button id="summarizeBtn">Generate Text Summary</button>
-  <div id="status"></div>
+  <div class="bg-animation">
+    <div style="width: 200px; height: 200px; top: 10%; left: 5%;"></div>
+    <div style="width: 300px; height: 300px; top: 60%; right: 10%;"></div>
+  </div>
+  <div class="container">
+    <div class="title">Content Summarizer</div>
+    <p class="description">Instantly extract and summarize webpage content with a futuristic touch!</p>
+    <button class="synth-button" id="summarizeBtn">Generate Summary</button>
+    <div id="status"></div>
+  </div>
   <script src="popup.js"></script>
-  
 </body>
-</html> 
+</html>
