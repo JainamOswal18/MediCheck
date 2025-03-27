@@ -166,6 +166,11 @@ chrome.runtime.onInstalled.addListener((details) => {
   // Reset state on update or install
   operationState.sidePanelOpenRequests = 0;
   operationState.lastOpenAttempt = 0;
+
+  // Clear chat history for testing on startup/restart
+  chrome.storage.local.remove(["chatHistory"], function () {
+    console.log("Chat history cleared on extension startup/update");
+  });
 });
 
 // Listen for tab updates to reapply highlighting if needed

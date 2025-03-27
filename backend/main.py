@@ -39,6 +39,18 @@ class ContentRequest(BaseModel):
 class ChatRequest(BaseModel):
     message: str
 
+# Initialize conversation history
+conversation_history = []
+
+# Initialize Gemini model for chat
+from langchain_google_genai import ChatGoogleGenerativeAI
+gemini_model = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash",
+    temperature=0.2,
+    google_api_key=API_KEY,
+    convert_system_message_to_human=True
+)
+
 @app.post("/summarize")
 async def validate_content(request: ContentRequest):
     try:
@@ -82,7 +94,8 @@ async def validate_content(request: ContentRequest):
         # Store request and validation response in conversation history
         conversation_history.append({"role": "user", "message": f"Validation request: {formatted_text}"})
         conversation_history.append({"role": "validation", "message": f"Validation result: {json.dumps(validation_result)}"})
-
+        
+        # Return the validation results
         return validation_result
 
     except Exception as e:
@@ -111,9 +124,9 @@ async def chat(request: ChatRequest):
         # Format history as direct conversation
         context = "\n".join([f"{msg['role']}: {msg['message']}" for msg in conversation_history])
 
-        # Generate response in direct speech
-        response = gemini_model.generate_content(f"{context}\nBot:(Instruction: (Keep it short and to the point))")
-        bot_reply = response.text if response else "I'm sorry, I couldn't process your request."
+        # Generate response using LangChain's invoke method
+        response = gemini_model.invoke(f"{context}\nBot:(Instruction: Keep it short and to the point)")
+        bot_reply = response.content if response else "I'm sorry, I couldn't process your request."
 
         # Ensure bot responds naturally without third-person narration
         if "Response:" in bot_reply:
@@ -128,11 +141,12 @@ async def chat(request: ChatRequest):
         logger.error(f"Error in chat route: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
-
+# 
 if __name__ == "__main__":
     import uvicorn
     logger.info("Starting FastAPI server...")

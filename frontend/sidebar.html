@@ -7,6 +7,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
       :root {
         --bg-primary: #0f0e17;
@@ -135,10 +136,41 @@
         background: transparent;
         border: 2px solid var(--accent-purple);
         color: var(--accent-purple);
+        padding: 0;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: all 0.3s ease;
+      }
+      
+      .mode-toggle:hover {
+        transform: rotate(30deg);
+        box-shadow: 0 0 10px var(--accent-purple);
+      }
+      
+      .reset-button {
+        position: absolute;
+        top: 20px;
+        right: 110px;
+        background: transparent;
+        border: 2px solid var(--accent-red);
+        color: var(--accent-red);
         padding: 5px 10px;
         border-radius: 20px;
         cursor: pointer;
         z-index: 10;
+        font-size: 12px;
+      }
+      
+      .reset-button:hover {
+        background-color: var(--accent-red);
+        color: var(--bg-primary);
       }
 
       .dashboard-container {
@@ -255,6 +287,32 @@
         font-size: 18px;
         font-weight: 600;
         color: var(--accent-purple);
+      }
+      
+      .clear-button {
+        background-color: transparent;
+        color: var(--accent-pink);
+        border: 1px solid var(--accent-pink);
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      
+      .clear-button:hover {
+        background-color: var(--accent-pink);
+        color: var(--bg-primary);
+      }
+      
+      @keyframes button-flash {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); background-color: var(--accent-pink); color: var(--bg-primary); }
+        100% { transform: scale(1); }
+      }
+      
+      .button-flash {
+        animation: button-flash 0.3s ease;
       }
 
       #summary-content,
@@ -439,7 +497,7 @@
   <body>
     <div class="dashboard-container">
       <div class="header-section">
-        <button class="mode-toggle">Light Mode</button>
+        <button class="mode-toggle"><i class="fas fa-sun"></i></button>
         <div class="header-greeting">Content Validator</div>
         <div class="header-subtext">Analysis and validation of web content</div>
       </div>
@@ -484,10 +542,11 @@
           <div class="chat-section">
             <div class="section-header">
               <span class="section-title">Digital Assistant</span>
+              <button id="clear-chat-button" class="clear-button">Clear Chat</button>
             </div>
             <div id="chat-messages">
               <div class="message ai-message">
-                How can I help you understand the validated content?
+                Hello! I'm your medical content assistant. You can ask me questions about the validated content, request explanations for medical terms, or get more information about any highlighted inaccuracies.
               </div>
             </div>
             <div class="chat-input-container">
