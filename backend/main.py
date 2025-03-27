@@ -35,6 +35,21 @@ app.add_middleware(
 class ContentRequest(BaseModel):
     content: dict
 
+class ChatRequest(BaseModel):
+    message: str
+
+# Initialize conversation history
+conversation_history = []
+
+# Initialize Gemini model for chat
+from langchain_google_genai import ChatGoogleGenerativeAI
+gemini_model = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash",
+    temperature=0.2,
+    google_api_key=API_KEY,
+    convert_system_message_to_human=True
+)
+
 @app.post("/summarize")
 async def validate_content(request: ContentRequest):
     try:
@@ -80,6 +95,10 @@ async def validate_content(request: ContentRequest):
         # Log the results
         logger.info("Validation completed successfully")
         logger.info("Returning validation results to client")
+
+        # Store request and validation response in conversation history
+        conversation_history.append({"role": "user", "message": f"Validation request: {formatted_text}"})
+        conversation_history.append({"role": "validation", "message": f"Validation result: {json.dumps(validation_result)}"})
         
         # Return the validation results
         return validation_result
@@ -93,11 +112,47 @@ async def validate_content(request: ContentRequest):
         }
         raise HTTPException(status_code=500, detail=json.dumps(error_response))
 
+@app.post("/chat")
+async def chat(request: ChatRequest):
+    try:
+        user_input = request.message
+        if not user_input:
+            raise HTTPException(status_code=400, detail="Message cannot be empty")
+
+        logger.info(f"Received chat query: {user_input}")
+
+        # Append user message to history
+        conversation_history.append({"role": "user", "message": user_input})
+
+        # Limit history size (e.g., keep only last 15 exchanges)
+        conversation_history[:] = conversation_history[-15:]
+
+        # Format history as direct conversation
+        context = "\n".join([f"{msg['role']}: {msg['message']}" for msg in conversation_history])
+
+        # Generate response using LangChain's invoke method
+        response = gemini_model.invoke(f"{context}\nBot:(Instruction: Keep it short and to the point)")
+        bot_reply = response.content if response else "I'm sorry, I couldn't process your request."
+
+        # Ensure bot responds naturally without third-person narration
+        if "Response:" in bot_reply:
+            bot_reply = bot_reply.split("Response:")[-1].strip()
+
+        # Append bot response to history
+        conversation_history.append({"role": "bot", "message": bot_reply})
+
+        return {"response": bot_reply}
+
+    except Exception as e:
+        logger.error(f"Error in chat route: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
-
+# 
 if __name__ == "__main__":
     import uvicorn
     logger.info("Starting FastAPI server...")
