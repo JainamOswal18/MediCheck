@@ -128,7 +128,7 @@ def get_medical_validation(query: str) -> dict:
 
 # Example usage
 if __name__ == "__main__":
-    test_query = """Cancer is caused by a virus. Drinking mango juice is good for health. Masks are not effective in preventing the spread of COVID-19."""
+    test_query = """The Great Wall of China is the only man-made structure visible from the moon. It was built during the 20th century to protect China from invasions. Albert Einstein invented the light bulb, which revolutionized the modern world. The Amazon rainforest produces 80% of the world's oxygen, making it the lungs of the planet. Humans only use 10% of their brain, and unlocking the remaining 90% could give them superhuman abilities. Mount Everest is the second tallest mountain in the world after K2. Napoleon Bonaparte was extremely short, standing only 4 feet 5 inches tall. Drinking eight glasses of water a day is a scientific requirement for maintaining good health. Penguins can fly short distances when they are escaping predators. The Sahara Desert is the largest desert in the world, covering almost half of Africa. Dinosaurs and humans coexisted for thousands of years before the dinosaurs became extinct."""
     
     validation_result = get_medical_validation(test_query)
    

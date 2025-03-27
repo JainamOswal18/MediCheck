@@ -20,8 +20,12 @@ document.addEventListener("DOMContentLoaded", function () {
   const validationResults = document.getElementById("validation-results");
   const modeToggle = document.querySelector(".mode-toggle");
   const body = document.body;
+  const contentContainer = document.querySelector(".content-container");
 
   console.log("Sidebar script loaded - DOM Content Loaded");
+
+  // Initialize layout
+  adjustLayout();
 
   // Debug element presence
   console.log("Elements found:", {
@@ -63,6 +67,49 @@ document.addEventListener("DOMContentLoaded", function () {
     chrome.storage.local.set({ activeTab: tabId });
   }
 
+  // Adjust layout based on current viewport
+  function adjustLayout() {
+    if (!contentContainer) return;
+
+    const headerSection = document.querySelector(".header-section");
+    const tabButtons = document.querySelector(".tab-buttons");
+
+    if (!headerSection || !tabButtons) return;
+
+    const headerHeight = headerSection.offsetHeight;
+    const tabsHeight = tabButtons.offsetHeight;
+    const paddingHeight =
+      parseInt(
+        getComputedStyle(document.querySelector(".dashboard-container")).padding
+      ) * 2;
+
+    // Update CSS variables
+    document.documentElement.style.setProperty(
+      "--header-height",
+      `${headerHeight}px`
+    );
+    document.documentElement.style.setProperty(
+      "--tabs-height",
+      `${tabsHeight}px`
+    );
+
+    // Set container height
+    contentContainer.style.height = `calc(100vh - ${
+      headerHeight + tabsHeight + paddingHeight + 30
+    }px)`;
+
+    // Ensure content areas have proper height
+    document
+      .querySelectorAll(".summary-section, .medical-section, .chat-section")
+      .forEach((section) => {
+        section.style.height = "100%";
+      });
+
+    console.log(
+      `Adjusted layout - Header: ${headerHeight}px, Tabs: ${tabsHeight}px, Container height: ${contentContainer.style.height}`
+    );
+  }
+
   // Initialize data loading
   loadDataAndSetupSidebar();
 
@@ -80,7 +127,41 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  function formatContentForDisplay(content) {
+    if (!content) return "<p>No content available</p>";
+
+    let html = "";
+
+    // Format title with proper styling
+    if (content.title) {
+      html += `<h3 style="margin-bottom: 15px; color: var(--accent-pink);">${content.title}</h3>`;
+    } else {
+      html += `<h3 style="margin-bottom: 15px; color: var(--accent-pink);">Webpage Content</h3>`;
+    }
+
+    // Format URL
+    if (content.url) {
+      html += `<p style="margin-bottom: 20px;"><strong>Source:</strong> <a href="${content.url}" target="_blank" style="color: var(--accent-blue); text-decoration: underline;">${content.url}</a></p>`;
+    }
+
+    // Add a simple message about content validation instead of showing the full text
+    html += `<div style="margin-top: 30px; padding: 20px; background-color: var(--bg-secondary); border-radius: 8px; text-align: center;">
+      <p style="margin-bottom: 15px; font-size: 16px;">This content has been analyzed by our validation system.</p>
+      <p style="color: var(--accent-blue);">View the <strong>Validation</strong> tab to see analysis results.</p>
+    </div>`;
+
+    return html;
+  }
+
   function loadDataAndSetupSidebar() {
+    // Show loading indicators in all tabs
+    summaryContent.innerHTML =
+      '<p style="text-align: center; margin-top: 20px;"><em>Loading content...</em></p>';
+    medicalSummary.innerHTML =
+      '<p style="text-align: center;"><em>Loading validation data...</em></p>';
+    validationResults.innerHTML =
+      '<p style="text-align: center;"><em>Loading validation results...</em></p>';
+
     // Load saved data and populate the sidebar
     chrome.storage.local.get(
       ["validationData", "scrapedContent", "activeTab", "theme"],
@@ -91,10 +172,6 @@ document.addEventListener("DOMContentLoaded", function () {
           activeTab: result.activeTab,
           theme: result.theme,
         });
-
-        if (result.validationData) {
-          console.log("Validation data:", result.validationData);
-        }
 
         // Set theme
         if (result.theme === "light") {
@@ -130,24 +207,17 @@ document.addEventListener("DOMContentLoaded", function () {
         // Display source content
         if (result.scrapedContent) {
           console.log("Displaying source content");
-          const sourceContent = result.scrapedContent;
-          summaryContent.innerHTML = `
-          <h3>${sourceContent.title || "No Title"}</h3>
-          <p><strong>Source:</strong> <a href="${
-            sourceContent.url || "#"
-          }" target="_blank">${sourceContent.url || "Unknown Source"}</a></p>
-          <div class="content-preview">
-            ${(sourceContent.text || "No content available").substring(
-              0,
-              300
-            )}...
-          </div>
-        `;
+          summaryContent.innerHTML = formatContentForDisplay(
+            result.scrapedContent
+          );
         } else {
           console.log("No source content available");
           summaryContent.innerHTML =
             '<div class="error">No content available. Please scrape a webpage first.</div>';
         }
+
+        // Adjust layout after content is loaded
+        setTimeout(adjustLayout, 100);
       }
     );
   }
@@ -157,7 +227,7 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("Processing validation results:", data);
     // Display the summary
     if (data.summary) {
-      medicalSummary.textContent = data.summary;
+      medicalSummary.innerHTML = `<p style="line-height: 1.7; font-size: 16px;">${data.summary}</p>`;
       console.log("Set medical summary");
     } else {
       medicalSummary.textContent = "No summary available.";
@@ -169,9 +239,12 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log(`Found ${data.validation_results.length} validation results`);
       let resultsHTML = "";
 
-      data.validation_results.forEach((result) => {
+      data.validation_results.forEach((result, index) => {
         resultsHTML += `
-          <div class="validation-result">
+          <div class="validation-result" style="margin-bottom: 20px; padding: 15px;">
+            <h4 style="margin-bottom: 10px; color: var(--accent-blue);">Issue #${
+              index + 1
+            }</h4>
             <div class="incorrect-text">${result.incorrect_text}</div>
             <div class="correct-text">${result.correct_text}</div>
           </div>
@@ -183,14 +256,20 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
       console.log("No validation results array or empty array");
       validationResults.innerHTML =
-        "<p>No issues found. All information appears to be accurate.</p>";
+        '<p style="padding: 15px; background-color: var(--bg-secondary); border-left: 3px solid var(--accent-green); color: var(--accent-green); font-weight: bold;">No issues found. All information appears to be accurate.</p>';
     }
   }
 
   // Event listener for theme toggle button
   if (modeToggle) {
     modeToggle.addEventListener("click", function () {
+      // First, remove all transitions temporarily
+      document.documentElement.style.setProperty("--transition-duration", "0s");
+
+      // Toggle the theme
       body.classList.toggle("light-mode");
+
+      // Update button text and store preference
       if (body.classList.contains("light-mode")) {
         modeToggle.textContent = "Dark Mode";
         chrome.storage.local.set({ theme: "light" });
@@ -198,6 +277,19 @@ document.addEventListener("DOMContentLoaded", function () {
         modeToggle.textContent = "Light Mode";
         chrome.storage.local.set({ theme: "dark" });
       }
+
+      // Force reflow to apply color changes immediately
+      void document.body.offsetHeight;
+
+      // Adjust layout after theme change
+      setTimeout(adjustLayout, 100);
     });
   }
+
+  // Debounced window resize handler
+  let resizeTimeout;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(adjustLayout, 200);
+  });
 });

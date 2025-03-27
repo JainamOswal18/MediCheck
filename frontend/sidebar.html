@@ -29,6 +29,14 @@
         --accent-purple-light: #8a2be2;
         --accent-red-light: #ff3333;
         --accent-green-light: #33cc66;
+        
+        /* Layout variables */
+        --header-height: 100px;
+        --tabs-height: 50px;
+        --container-padding: 15px;
+        
+        /* Transition variables */
+        --transition-duration: 0.3s;
       }
 
       body.light-mode {
@@ -80,14 +88,20 @@
         box-sizing: border-box;
         margin: 0;
         padding: 0;
-        transition: all 0.3s ease;
+        transition: background var(--transition-duration) ease,
+                    background-color var(--transition-duration) ease,
+                    border-color var(--transition-duration) ease,
+                    box-shadow var(--transition-duration) ease,
+                    transform var(--transition-duration) ease;
       }
 
       html,
       body {
         height: 100%;
         width: 100%;
-        overflow-x: hidden;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
       }
 
       body {
@@ -102,9 +116,10 @@
         background-size: 400% 400%;
         animation: gradientBG 15s ease infinite;
         color: var(--text-primary);
-        min-height: 100vh;
+        height: 100vh;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
       }
 
       body.light-mode {
@@ -136,7 +151,9 @@
         max-width: 1200px;
         margin: 0 auto;
         flex-grow: 1;
-        padding: 15px;
+        padding: var(--container-padding);
+        height: 100vh;
+        overflow: hidden;
       }
 
       .header-section {
@@ -146,6 +163,9 @@
         animation: slideIn 0.7s ease;
         margin-bottom: 15px;
         position: relative;
+        flex-shrink: 0;
+        height: var(--header-height);
+        box-sizing: border-box;
       }
 
       .header-greeting {
@@ -165,6 +185,9 @@
       .tab-buttons {
         display: flex;
         margin-bottom: 15px;
+        flex-shrink: 0;
+        height: var(--tabs-height);
+        box-sizing: border-box;
       }
 
       .tab-button {
@@ -184,12 +207,16 @@
 
       .tab-content {
         display: none;
+        height: 100%;
+        overflow: hidden;
       }
 
       .tab-content.active {
         display: flex;
         flex-direction: column;
         flex-grow: 1;
+        height: 100%;
+        overflow: hidden;
       }
 
       .content-container {
@@ -197,6 +224,8 @@
         flex-direction: column;
         gap: 15px;
         flex-grow: 1;
+        height: calc(100vh - var(--header-height) - var(--tabs-height) - (var(--container-padding) * 2));
+        overflow: hidden;
       }
 
       .summary-section,
@@ -211,6 +240,9 @@
         flex-direction: column;
         border: 1px solid var(--accent-blue);
         animation: slideIn 0.9s ease;
+        height: 100%;
+        min-height: 0; /* Allows for proper flexbox sizing */
+        overflow: hidden;
       }
 
       .section-header {
@@ -233,10 +265,11 @@
       #chat-messages {
         flex-grow: 1;
         overflow-y: auto;
-        padding: 10px;
+        padding: 15px;
         background-color: var(--bg-primary);
         border-radius: 8px;
-        max-height: 300px;
+        max-height: none;
+        min-height: 0; /* Important for proper flexbox sizing */
       }
 
       .validation-result {
@@ -365,14 +398,18 @@
       }
 
       @media screen and (min-width: 768px) {
-        #summary-content,
-        #medical-content,
-        #chat-messages {
-          max-height: none;
+        :root {
+          --header-height: 120px;
+          --tabs-height: 60px;
         }
       }
 
       @media screen and (max-width: 480px) {
+        :root {
+          --header-height: 90px;
+          --tabs-height: 45px;
+        }
+        
         .header-section {
           padding: 10px;
         }
@@ -392,6 +429,13 @@
         #chat-input {
           font-size: 14px;
         }
+      }
+
+      /* Override any color transitions specifically */
+      *, *::before, *::after {
+        transition-property: background, background-color, border-color, box-shadow, transform;
+        color: var(--text-primary);
+        fill: var(--text-primary);
       }
     </style>
   </head>
