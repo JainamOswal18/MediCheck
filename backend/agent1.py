@@ -6,6 +6,11 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 import json
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -30,6 +35,7 @@ class MedicalFactChecker:
             model_name (str): Name of the Google AI model to use
             temperature (float): Creativity/randomness of the model response
         """
+        logger.info(f"Initializing MedicalFactChecker with model: {model_name}")
         # Initialize the language model
         self.llm = ChatGoogleGenerativeAI(
             model=model_name, 
@@ -69,15 +75,18 @@ Text: {query}
             MedicalValidation: Structured validation results
         """
         try:
+            logger.info(f"Validating query of length: {len(query)}")
             # Combine prompt and language model
             chain = self.prompt | self.llm | self.output_parser
             
             # Generate the validation result
             result = chain.invoke({"query": query})
+            logger.info(f"Validation completed successfully, result type: {type(result)}")
             
             return result
         
         except Exception as e:
+            logger.error(f"Error during validation: {str(e)}")
             # Create a structured error response
             return MedicalValidation(
                 summary="Error processing the query",
@@ -99,11 +108,23 @@ def get_medical_validation(query: str) -> dict:
     Returns:
         dict: JSON-compatible validation results
     """
+    logger.info("Starting medical validation process")
     checker = MedicalFactChecker()
     result = checker.validate(query)
     
     # Convert Pydantic model to dictionary
-    return result.model_dump()
+    result_dict = result.model_dump()
+    
+    # Log the structure of the result
+    logger.info(f"Validation result structure: {result_dict.keys()}")
+    logger.info(f"Has validation_results: {'validation_results' in result_dict}")
+    if 'validation_results' in result_dict:
+        logger.info(f"Number of validation results: {len(result_dict['validation_results'])}")
+    
+    # Log the complete result for debugging
+    logger.info(f"Complete validation result: {json.dumps(result_dict)}")
+    
+    return result_dict
 
 # Example usage
 if __name__ == "__main__":

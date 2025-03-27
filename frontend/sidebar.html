@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Page Insights Dashboard</title>
+    <title>Content Validation Dashboard</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
       rel="stylesheet"
@@ -16,6 +16,8 @@
         --accent-pink: #ff6bcb;
         --accent-blue: #2de2e6;
         --accent-purple: #5d3fdd;
+        --accent-red: #ff4a4a;
+        --accent-green: #4aff91;
 
         /* Light mode colors */
         --bg-primary-light: #ffffff;
@@ -25,6 +27,8 @@
         --accent-pink-light: #ff1493;
         --accent-blue-light: #1e90ff;
         --accent-purple-light: #8a2be2;
+        --accent-red-light: #ff3333;
+        --accent-green-light: #33cc66;
       }
 
       body.light-mode {
@@ -35,6 +39,8 @@
         --accent-pink: var(--accent-pink-light);
         --accent-blue: var(--accent-blue-light);
         --accent-purple: var(--accent-purple-light);
+        --accent-red: var(--accent-red-light);
+        --accent-green: var(--accent-green-light);
       }
 
       @keyframes gradientBG {
@@ -156,6 +162,36 @@
         margin-bottom: 1rem;
       }
 
+      .tab-buttons {
+        display: flex;
+        margin-bottom: 15px;
+      }
+
+      .tab-button {
+        padding: 10px 20px;
+        background-color: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid var(--accent-purple);
+        border-radius: 8px 8px 0 0;
+        cursor: pointer;
+        margin-right: 5px;
+      }
+
+      .tab-button.active {
+        background-color: var(--accent-purple);
+        color: var(--text-primary);
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+      }
+
       .content-container {
         display: flex;
         flex-direction: column;
@@ -164,6 +200,7 @@
       }
 
       .summary-section,
+      .medical-section,
       .chat-section {
         flex: 1;
         padding: 15px;
@@ -192,6 +229,7 @@
       }
 
       #summary-content,
+      #medical-content,
       #chat-messages {
         flex-grow: 1;
         overflow-y: auto;
@@ -199,6 +237,35 @@
         background-color: var(--bg-primary);
         border-radius: 8px;
         max-height: 300px;
+      }
+
+      .validation-result {
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: var(--bg-secondary);
+        border-left: 3px solid var(--accent-purple);
+      }
+
+      .validation-summary {
+        margin-bottom: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--accent-blue);
+      }
+
+      .incorrect-text {
+        color: var(--accent-red);
+        text-decoration: line-through;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+
+      .correct-text {
+        color: var(--accent-green);
+        margin-bottom: 8px;
+        font-weight: bold;
       }
 
       .chat-input-container {
@@ -266,33 +333,40 @@
       }
 
       #summary-content::-webkit-scrollbar,
+      #medical-content::-webkit-scrollbar,
       #chat-messages::-webkit-scrollbar {
         width: 8px;
       }
 
       #summary-content::-webkit-scrollbar-track,
+      #medical-content::-webkit-scrollbar-track,
       #chat-messages::-webkit-scrollbar-track {
         background: var(--bg-secondary);
       }
 
       #summary-content::-webkit-scrollbar-thumb,
+      #medical-content::-webkit-scrollbar-thumb,
       #chat-messages::-webkit-scrollbar-thumb {
         background: var(--accent-blue);
         border-radius: 4px;
       }
 
+      .content-preview {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: var(--bg-secondary);
+        border-radius: 8px;
+        font-style: italic;
+      }
+
+      .error {
+        color: var(--accent-red);
+        margin: 10px 0;
+      }
+
       @media screen and (min-width: 768px) {
-        .content-container {
-          flex-direction: row;
-        }
-
-        .summary-section,
-        .chat-section {
-          flex: 1;
-          max-width: 50%;
-        }
-
         #summary-content,
+        #medical-content,
         #chat-messages {
           max-height: none;
         }
@@ -325,41 +399,103 @@
     <div class="dashboard-container">
       <div class="header-section">
         <button class="mode-toggle">Light Mode</button>
-        <div class="header-greeting">Hi,</div>
-        <div class="header-subtext">How can I assist you today?</div>
+        <div class="header-greeting">Content Validator</div>
+        <div class="header-subtext">Analysis and validation of web content</div>
+      </div>
+
+      <div class="tab-buttons">
+        <button class="tab-button" data-tab="summary-tab">Content</button>
+        <button class="tab-button active" data-tab="medical-tab">Validation</button>
+        <button class="tab-button" data-tab="chat-tab">Assistant</button>
       </div>
 
       <div class="content-container">
-        <div class="summary-section">
-          <div class="section-header">
-            <span class="section-title">Page Insights</span>
-          </div>
-          <div id="summary-content">
-            <p>Content analysis will appear here.</p>
+        <div id="summary-tab" class="tab-content">
+          <div class="summary-section">
+            <div class="section-header">
+              <span class="section-title">Source Content</span>
+            </div>
+            <div id="summary-content">
+              <p>Loading source content...</p>
+            </div>
           </div>
         </div>
 
-        <div class="chat-section">
-          <div class="section-header">
-            <span class="section-title">Digital Assistant</span>
-          </div>
-          <div id="chat-messages" class="flex flex-col">
-            <div class="message ai-message">
-              Greetings, digital wanderer. Ready to explore the validity of the
-              content?
+        <div id="medical-tab" class="tab-content active">
+          <div class="medical-section">
+            <div class="section-header">
+              <span class="section-title">Content Validation</span>
+            </div>
+            <div id="medical-content">
+              <div class="validation-summary">
+                <h3>Summary</h3>
+                <p id="medical-summary">Loading validation summary...</p>
+              </div>
+              <h3>Validation Results</h3>
+              <div id="validation-results">
+                <p>Loading validation results...</p>
+              </div>
             </div>
           </div>
-          <div class="chat-input-container">
-            <input
-              type="text"
-              id="chat-input"
-              placeholder="Transmit your query..."
-            />
-            <button id="send-button" class="send-button">↵</button>
+        </div>
+
+        <div id="chat-tab" class="tab-content">
+          <div class="chat-section">
+            <div class="section-header">
+              <span class="section-title">Digital Assistant</span>
+            </div>
+            <div id="chat-messages">
+              <div class="message ai-message">
+                How can I help you understand the validated content?
+              </div>
+            </div>
+            <div class="chat-input-container">
+              <input
+                type="text"
+                id="chat-input"
+                placeholder="Ask a question about the content..."
+              />
+              <button id="send-button" class="send-button">↵</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
     <script src="sidebar.js"></script>
+    <script>
+      // Immediately set medical tab as active by default when the page loads
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log("Page loaded - setting default tab state");
+        
+        // Check if Chrome storage has data
+        chrome.storage.local.get(['validationData', 'activeTab'], function(result) {
+          console.log("Chrome storage check on load:", result);
+          
+          // Only set default if no explicit activeTab is stored
+          if (!result.activeTab) {
+            // Make medical tab active by default
+            const medicalTab = document.getElementById("medical-tab");
+            const medicalButton = document.querySelector('.tab-button[data-tab="medical-tab"]');
+            
+            if (medicalTab && medicalButton) {
+              console.log("Setting medical tab as default active tab");
+              
+              // Remove active class from all tabs
+              document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+              });
+              document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+              });
+              
+              // Add active class to medical tab
+              medicalButton.classList.add('active');
+              medicalTab.classList.add('active');
+            }
+          }
+        });
+      });
+    </script>
   </body>
 </html>

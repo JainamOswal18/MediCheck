@@ -1,21 +1,24 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 import json
 from datetime import datetime
+import logging
+from agent1 import get_medical_validation
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
 
-# Configure Gemini API
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if not GOOGLE_API_KEY:
+# Configure API key
+API_KEY = os.getenv("GOOGLE_API_KEY")
+if not API_KEY:
     raise ValueError("GOOGLE_API_KEY not found in environment variables")
-
-genai.configure(api_key=GOOGLE_API_KEY)
 
 app = FastAPI()
 
@@ -33,50 +36,23 @@ class ContentRequest(BaseModel):
     content: dict
 
 @app.post("/summarize")
-async def summarize_content(request: ContentRequest):
+async def validate_content(request: ContentRequest):
     try:
+        logger.info("Received content validation request")
         content = request.content
         metadata = content.get('metadata', {})
         
-        # # Create timestamp for logging
-        # timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Prepare the text for validation
+        title = content.get('title', 'No title')
+        url = content.get('url', 'No URL')
+        text = content.get('text', '')
         
-        # # Log to console
-        # print("\n" + "="*50)
-        # print(f"New request received at {timestamp}")
-        # print(f"URL: {content.get('url', 'No URL')}")
-        # print(f"Title: {content.get('title', 'No title')}")
-        # print(f"Content length: {len(content.get('text', ''))} characters")
-        # print("Metadata:", json.dumps(metadata, indent=2))
-        # print("="*50 + "\n")
+        logger.info(f"Content info - Title: {title}, URL: {url}, Text length: {len(text)}")
         
-        # # Create logs directory if it doesn't exist
-        # os.makedirs('logs', exist_ok=True)
-        
-        # # Save metadata and text content to JSON file
-        # log_data = {
-        #     "timestamp": timestamp,
-        #     "url": content.get('url'),
-        #     "title": content.get('title'),
-        #     "content_length": len(content.get('text', '')),
-        #     "metadata": metadata,
-        #     "text_preview": content.get('text', '')[:500] + '...' if len(content.get('text', '')) > 500 else content.get('text', '')
-        # }
-        
-        # # Save to JSON file
-        # log_filename = f"logs/scraped_data_{timestamp.replace(' ', '_').replace(':', '-')}.json"
-        # with open(log_filename, 'w', encoding='utf-8') as f:
-        #     json.dump(log_data, f, ensure_ascii=False, indent=2)
-        
-        # Initialize Gemini model
-        model = genai.GenerativeModel('gemini-2.0-flash')
-        
-        # Prepare the prompt with enhanced context
-        prompt = f"""
-        Please provide a short summary of the following webpage content:
-        
-        Title: {content['title']}
-        URL: {content['url']}
+        # Format the text to include metadata context
+        formatted_text = f"""
+        Title: {title}
+        URL: {url}
         
         Metadata:
         - Description: {metadata.get('description', 'Not available')}
@@ -86,31 +62,43 @@ async def summarize_content(request: ContentRequest):
         - Open Graph Description: {metadata.get('ogDescription', 'Not available')}
         
         Main Content:
-        {content['text'][:30000]}  # Limit content length
-        
-        Please provide a well-structured summary that captures:
-        1. The main topic and purpose of the page
-        2. Key points and important information
-        3. Any notable metadata or context
-        4. The overall structure and organization of the content
+        {text[:30000]}  # Limit content length
         """
         
-        # Generate summary
-        response = model.generate_content(prompt)
+        # Log the request
+        logger.info(f"Processing Content for Validation - Source: {url}, Length: {len(formatted_text)}")
         
-        # Log the summary
-        print("\nGenerated Summary:")
-        print("-"*50)
-        print(response.text)
-        print("-"*50 + "\n")
+        # Get validation results using the medical validation function
+        logger.info("Calling get_medical_validation function")
+        validation_result = get_medical_validation(formatted_text)
         
-        return {"summary": response.text}
+        # Check the result structure
+        logger.info(f"Validation result keys: {validation_result.keys() if validation_result else 'None'}")
+        if 'validation_results' in validation_result:
+            logger.info(f"Number of validation results: {len(validation_result['validation_results'])}")
+        
+        # Log the results
+        logger.info("Validation completed successfully")
+        logger.info("Returning validation results to client")
+        
+        # Return the validation results
+        return validation_result
     
     except Exception as e:
-        print(f"\nError occurred: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error during content validation: {str(e)}")
+        # Return a structured error response
+        error_response = {
+            "summary": f"Error: {str(e)}",
+            "validation_results": []
+        }
+        raise HTTPException(status_code=500, detail=json.dumps(error_response))
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn
-    print("\nStarting FastAPI server...")
+    logger.info("Starting FastAPI server...")
     uvicorn.run(app, host="0.0.0.0", port=8000) 
