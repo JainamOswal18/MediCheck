@@ -89,6 +89,9 @@ if (chrome.sidePanel) {
     chrome.sidePanel.onShow.addListener(() => {
       console.log("Side panel was shown");
       operationState.sidePanelOpenRequests = 0; // Reset counter on success
+
+      // When side panel is shown, check if we need to apply highlighting
+      applyHighlightingToActiveTab();
     });
   }
 
@@ -99,6 +102,63 @@ if (chrome.sidePanel) {
   }
 }
 
+// Function to apply highlighting to active tab
+function applyHighlightingToActiveTab() {
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    if (!tabs || !tabs[0]) return;
+
+    const activeTab = tabs[0];
+    chrome.storage.local.get(["validationData"], (result) => {
+      if (result.validationData && result.validationData.validation_results) {
+        const validationResults = result.validationData.validation_results;
+
+        // Extract both incorrect phrases and corrections
+        const incorrectPhrases = [];
+        const correctTexts = [];
+
+        validationResults.forEach((item) => {
+          if (item.incorrect_text && item.incorrect_text.trim()) {
+            incorrectPhrases.push(item.incorrect_text.trim());
+            correctTexts.push(item.correct_text || "No correction available");
+          }
+        });
+
+        if (incorrectPhrases.length > 0) {
+          console.log(
+            `Applying highlighting to tab ${activeTab.id} with ${incorrectPhrases.length} phrases`
+          );
+
+          // Wait for content to be fully loaded
+          setTimeout(() => {
+            chrome.tabs
+              .sendMessage(activeTab.id, {
+                action: "highlight",
+                phrases: incorrectPhrases,
+                corrections: correctTexts,
+              })
+              .catch((error) => {
+                console.error("Error applying highlighting:", error);
+
+                // Try once more with a longer delay
+                setTimeout(() => {
+                  chrome.tabs
+                    .sendMessage(activeTab.id, {
+                      action: "highlight",
+                      phrases: incorrectPhrases,
+                      corrections: correctTexts,
+                    })
+                    .catch((retryError) => {
+                      console.error("Error on retry:", retryError);
+                    });
+                }, 2000);
+              });
+          }, 1000);
+        }
+      }
+    });
+  });
+}
+
 // Handle extension installation or update
 chrome.runtime.onInstalled.addListener((details) => {
   console.log("Extension installed/updated:", details.reason);
@@ -106,4 +166,67 @@ chrome.runtime.onInstalled.addListener((details) => {
   // Reset state on update or install
   operationState.sidePanelOpenRequests = 0;
   operationState.lastOpenAttempt = 0;
+
+  // Clear chat history for testing on startup/restart
+  chrome.storage.local.remove(["chatHistory"], function () {
+    console.log("Chat history cleared on extension startup/update");
+  });
+});
+
+// Listen for tab updates to reapply highlighting if needed
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  // Only react to complete page loads
+  if (changeInfo.status === "complete") {
+    chrome.storage.local.get(["validationData"], (result) => {
+      // If we have validation data, apply highlighting
+      if (result.validationData && result.validationData.validation_results) {
+        const validationResults = result.validationData.validation_results;
+
+        // Extract both incorrect phrases and corrections
+        const incorrectPhrases = [];
+        const correctTexts = [];
+
+        validationResults.forEach((item) => {
+          if (item.incorrect_text && item.incorrect_text.trim()) {
+            incorrectPhrases.push(item.incorrect_text.trim());
+            correctTexts.push(item.correct_text || "No correction available");
+          }
+        });
+
+        if (incorrectPhrases.length > 0) {
+          // Wait a short time for the page to fully render
+          setTimeout(() => {
+            console.log(
+              `Tab ${tabId} updated, applying highlighting for ${incorrectPhrases.length} phrases`
+            );
+            chrome.tabs
+              .sendMessage(tabId, {
+                action: "highlight",
+                phrases: incorrectPhrases,
+                corrections: correctTexts,
+              })
+              .catch((error) => {
+                console.log(
+                  "Error sending highlight command on tab update, will retry:",
+                  error
+                );
+
+                // Retry with a longer delay
+                setTimeout(() => {
+                  chrome.tabs
+                    .sendMessage(tabId, {
+                      action: "highlight",
+                      phrases: incorrectPhrases,
+                      corrections: correctTexts,
+                    })
+                    .catch((retryError) => {
+                      console.error("Error on retry:", retryError);
+                    });
+                }, 2000);
+              });
+          }, 1000);
+        }
+      }
+    });
+  }
 });

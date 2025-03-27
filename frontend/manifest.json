@@ -3,7 +3,7 @@
   "name": "Content Validator",
   "version": "1.0",
   "description": "Validates webpage content and provides factual corrections using Gemini AI",
-  "permissions": ["activeTab", "scripting", "storage", "sidePanel"],
+  "permissions": ["activeTab", "scripting", "storage", "sidePanel", "tabs"],
   "host_permissions": ["http://localhost:8000/*", "<all_urls>"],
   "action": {
     "default_popup": "popup.html",

@@ -61,6 +61,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const selectedContent = document.getElementById(tabId);
     if (selectedContent) {
       selectedContent.classList.add("active");
+
+      // Focus chat input if the chat tab is selected
+      if (tabId === "chat-tab") {
+        setTimeout(() => {
+          const chatInput = document.getElementById("chat-input");
+          if (chatInput) {
+            chatInput.focus();
+          }
+        }, 100);
+      }
     }
 
     // Save active tab preference
@@ -176,10 +186,16 @@ document.addEventListener("DOMContentLoaded", function () {
         // Set theme
         if (result.theme === "light") {
           body.classList.add("light-mode");
-          modeToggle.textContent = "Dark Mode";
+          const iconElement = modeToggle.querySelector("i");
+          if (iconElement) {
+            iconElement.className = "fas fa-sun";
+          }
         } else {
           body.classList.remove("light-mode");
-          modeToggle.textContent = "Light Mode";
+          const iconElement = modeToggle.querySelector("i");
+          if (iconElement) {
+            iconElement.className = "fas fa-moon";
+          }
         }
 
         // Set active tab
@@ -234,6 +250,26 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("No summary in validation data");
     }
 
+    // Extract all incorrect phrases and their corrections for highlighting
+    const incorrectPhrases = [];
+    const correctTexts = [];
+    if (data.validation_results && data.validation_results.length > 0) {
+      data.validation_results.forEach((result) => {
+        if (result.incorrect_text && result.incorrect_text.trim()) {
+          incorrectPhrases.push(result.incorrect_text.trim());
+          correctTexts.push(result.correct_text || "No correction available");
+        }
+      });
+    }
+
+    // Send highlight command to content script immediately without waiting for button press
+    if (incorrectPhrases.length > 0) {
+      console.log(
+        `Sending highlight command for ${incorrectPhrases.length} phrases`
+      );
+      sendHighlightCommand(incorrectPhrases, correctTexts);
+    }
+
     // Display validation results
     if (data.validation_results && data.validation_results.length > 0) {
       console.log(`Found ${data.validation_results.length} validation results`);
@@ -245,7 +281,9 @@ document.addEventListener("DOMContentLoaded", function () {
             <h4 style="margin-bottom: 10px; color: var(--accent-blue);">Issue #${
               index + 1
             }</h4>
-            <div class="incorrect-text">${result.incorrect_text}</div>
+            <div class="incorrect-text" data-index="${index}">${
+          result.incorrect_text
+        }</div>
             <div class="correct-text">${result.correct_text}</div>
           </div>
         `;
@@ -260,6 +298,48 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Function to send highlight command to content script
+  function sendHighlightCommand(phrases, corrections) {
+    // Get the current active tab
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      if (tabs && tabs[0]) {
+        console.log("Sending highlight command to tab:", tabs[0].id);
+        try {
+          chrome.tabs
+            .sendMessage(tabs[0].id, {
+              action: "highlight",
+              phrases: phrases,
+              corrections: corrections,
+            })
+            .then((response) => {
+              console.log("Highlight command response:", response);
+            })
+            .catch((error) => {
+              console.error("Error sending highlight command:", error);
+
+              // If there's an error (content script not ready), retry after a short delay
+              setTimeout(() => {
+                console.log("Retrying highlight command...");
+                chrome.tabs
+                  .sendMessage(tabs[0].id, {
+                    action: "highlight",
+                    phrases: phrases,
+                    corrections: corrections,
+                  })
+                  .catch((retryError) => {
+                    console.error("Error on retry:", retryError);
+                  });
+              }, 1000);
+            });
+        } catch (error) {
+          console.error("Exception sending highlight command:", error);
+        }
+      } else {
+        console.error("No active tab found for highlighting");
+      }
+    });
+  }
+
   // Event listener for theme toggle button
   if (modeToggle) {
     modeToggle.addEventListener("click", function () {
@@ -269,12 +349,13 @@ document.addEventListener("DOMContentLoaded", function () {
       // Toggle the theme
       body.classList.toggle("light-mode");
 
-      // Update button text and store preference
+      // Update button icon and store preference
+      const iconElement = modeToggle.querySelector("i");
       if (body.classList.contains("light-mode")) {
-        modeToggle.textContent = "Dark Mode";
+        iconElement.className = "fas fa-sun";
         chrome.storage.local.set({ theme: "light" });
       } else {
-        modeToggle.textContent = "Light Mode";
+        iconElement.className = "fas fa-moon";
         chrome.storage.local.set({ theme: "dark" });
       }
 
@@ -284,6 +365,262 @@ document.addEventListener("DOMContentLoaded", function () {
       // Adjust layout after theme change
       setTimeout(adjustLayout, 100);
     });
+  }
+
+  // ===== CHAT FUNCTIONALITY =====
+  const chatInput = document.getElementById("chat-input");
+  const sendButton = document.getElementById("send-button");
+  const chatMessages = document.getElementById("chat-messages");
+  const clearChatButton = document.getElementById("clear-chat-button");
+  let isSending = false;
+
+  // Initialize chat
+  loadChatHistory();
+
+  // Add event listeners for chat input
+  chatInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      sendMessage();
+    }
+  });
+
+  sendButton.addEventListener("click", sendMessage);
+
+  // Add event listener for clear chat button
+  clearChatButton.addEventListener("click", clearChatHistory);
+
+  /**
+   * Loads chat history from storage
+   */
+  function loadChatHistory() {
+    chrome.storage.local.get(["chatHistory"], function (result) {
+      if (result.chatHistory && result.chatHistory.length > 0) {
+        chatMessages.innerHTML = ""; // Clear default message
+        result.chatHistory.forEach((msg) => {
+          appendMessageToUI(msg.role, msg.message);
+        });
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    });
+  }
+
+  /**
+   * Saves chat history to storage
+   * @param {Array} messages - Array of message objects {role, message}
+   */
+  function saveChatHistory(messages) {
+    chrome.storage.local.set({ chatHistory: messages });
+  }
+
+  /**
+   * Sends user message to backend and handles response
+   */
+  async function sendMessage() {
+    const message = chatInput.value.trim();
+    if (!message || isSending) return;
+
+    try {
+      isSending = true;
+
+      // Clear input field
+      chatInput.value = "";
+
+      // Add user message to UI with animation
+      appendMessageToUI("user", message);
+
+      // Show typing indicator
+      const typingIndicator = addTypingIndicator();
+
+      console.log("Sending chat message to backend:", message);
+
+      try {
+        // Make API request to backend chat endpoint
+        const response = await fetch("http://localhost:8000/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: message }),
+        });
+
+        // Remove typing indicator
+        if (typingIndicator) typingIndicator.remove();
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Server error:", errorText);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Received chat response:", data);
+
+        // Add bot response to UI with animation
+        appendMessageToUI("ai", data.response);
+
+        // Retrieve existing messages from UI
+        const messages = [];
+        document.querySelectorAll(".message").forEach((el) => {
+          // Skip typing indicators
+          if (el.classList.contains("typing-indicator")) return;
+
+          const role = el.classList.contains("user-message") ? "user" : "ai";
+          const text = el.textContent.trim();
+          messages.push({ role, message: text });
+        });
+
+        // Save updated chat history
+        saveChatHistory(messages);
+      } catch (networkError) {
+        console.error("Network error:", networkError);
+        if (typingIndicator) typingIndicator.remove();
+
+        // Show a more descriptive error message
+        appendMessageToUI(
+          "ai",
+          "I'm having trouble connecting to the server. Please check that the backend is running at http://localhost:8000 and try again."
+        );
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+      appendMessageToUI(
+        "ai",
+        "Sorry, I encountered an unexpected error. Please try again or check the console for details."
+      );
+    } finally {
+      isSending = false;
+      // Scroll to bottom
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      // Focus the input field again
+      chatInput.focus();
+    }
+  }
+
+  /**
+   * Adds a typing indicator to the chat
+   * @returns {HTMLElement} The typing indicator element
+   */
+  function addTypingIndicator() {
+    const typingEl = document.createElement("div");
+    typingEl.className = "message ai-message typing-indicator";
+    typingEl.innerHTML = `
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    `;
+
+    // Add CSS for the typing animation
+    if (!document.getElementById("typing-style")) {
+      const style = document.createElement("style");
+      style.id = "typing-style";
+      style.innerHTML = `
+        .typing-indicator {
+          display: flex;
+          align-items: center;
+          padding: 12px 15px;
+        }
+        .typing-indicator .dot {
+          display: inline-block;
+          width: 8px;
+          height: 8px;
+          margin-right: 3px;
+          background-color: var(--accent-blue);
+          border-radius: 50%;
+          opacity: 0.6;
+          animation: typing-dot 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator .dot:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+        .typing-indicator .dot:nth-child(3) {
+          animation-delay: 0.4s;
+        }
+        @keyframes typing-dot {
+          0%, 80%, 100% { 
+            transform: scale(0.7);
+            opacity: 0.6;
+          }
+          40% { 
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    chatMessages.appendChild(typingEl);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return typingEl;
+  }
+
+  /**
+   * Appends a message to the chat UI with animation
+   * @param {string} role - "user" or "ai"
+   * @param {string} text - Message text
+   */
+  function appendMessageToUI(role, text) {
+    const messageEl = document.createElement("div");
+    messageEl.className = `message ${
+      role === "user" ? "user-message" : "ai-message"
+    }`;
+    messageEl.textContent = text;
+
+    // Add animation class with random delay
+    messageEl.style.animationDelay = `${Math.random() * 0.3}s`;
+
+    // Add animation CSS if not already present
+    if (!document.getElementById("message-animation")) {
+      const style = document.createElement("style");
+      style.id = "message-animation";
+      style.innerHTML = `
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .message {
+          animation: fadeInUp 0.3s ease forwards;
+          opacity: 0;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    chatMessages.appendChild(messageEl);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  /**
+   * Clears chat history and resets to initial state
+   */
+  function clearChatHistory() {
+    // Clear chat messages UI
+    chatMessages.innerHTML = "";
+
+    // Add default welcome message
+    appendMessageToUI(
+      "ai",
+      "Hello! I'm your medical content assistant. You can ask me questions about the validated content, request explanations for medical terms, or get more information about any highlighted inaccuracies."
+    );
+
+    // Clear chat history in storage
+    chrome.storage.local.remove(["chatHistory"], function () {
+      console.log("Chat history cleared");
+    });
+
+    // Add subtle animation indicating successful reset
+    clearChatButton.classList.add("button-flash");
+    setTimeout(() => {
+      clearChatButton.classList.remove("button-flash");
+    }, 300);
   }
 
   // Debounced window resize handler
