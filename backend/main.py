@@ -47,7 +47,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 gemini_model = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash",
     temperature=0.2,
-    google_api_key=API_KEY,
+    google_api_key=os.getenv("GOOGLE_API_KEY"),
     convert_system_message_to_human=True
 )
 
