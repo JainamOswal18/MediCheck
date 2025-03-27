@@ -1,3 +1,3 @@
 backend/.env
 backend/venv
-backend/logs.env
+backend/logs
