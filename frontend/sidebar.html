@@ -385,11 +385,18 @@
         cursor: pointer;
         transition: all 0.3s ease;
         box-shadow: 0 0 10px var(--accent-pink);
+        font-size: 16px;
       }
 
       .send-button:hover {
-        transform: scale(1.1) rotate(360deg);
+        transform: scale(1.1);
         background-color: var(--accent-blue);
+        box-shadow: 0 0 15px var(--accent-blue);
+      }
+      
+      .send-button i {
+        position: relative;
+        left: -1px; /* Slight adjustment for optical centering */
       }
 
       .message {
@@ -555,7 +562,7 @@
                 id="chat-input"
                 placeholder="Ask a question about the content..."
               />
-              <button id="send-button" class="send-button">↵</button>
+              <button id="send-button" class="send-button"><i class="fas fa-paper-plane"></i></button>
             </div>
           </div>
         </div>
