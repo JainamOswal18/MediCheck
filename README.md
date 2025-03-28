@@ -84,7 +84,7 @@ cd chrome-extension
 1. Make sure the backend server is running (you should see "Starting FastAPI server..." in the terminal)
 2. Navigate to any webpage with medical content you want to validate
 3. Click the extension icon in your Chrome toolbar
-4. Click "Generate Summary" in the popup
+4. Click "Start Validation" in the popup
 5. The extension will:
    - Extract content from the webpage
    - Send it to the backend for validation
